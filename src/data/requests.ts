@@ -103,6 +103,8 @@ export function requestStatusLabel(status: RequestStatus): string {
       return 'Recusada'
     case 'concluida':
       return 'Concluída'
+    case 'cancelada':
+      return 'Cancelada'
   }
 }
 
@@ -133,5 +135,7 @@ export function requestPill(status: RequestStatus): string {
       return 'vencida'
     case 'concluida':
       return 'sem_registro'
+    case 'cancelada':
+      return 'cancelada'
   }
 }

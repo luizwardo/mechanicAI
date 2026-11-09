@@ -11,7 +11,7 @@ export type CareStatus = 'sem_registro' | 'em_dia' | 'proxima' | 'vencida'
 
 export type AccountRole = 'cliente' | 'provedor'
 
-export type RequestStatus = 'nova' | 'aceita' | 'recusada' | 'concluida'
+export type RequestStatus = 'nova' | 'aceita' | 'recusada' | 'concluida' | 'cancelada'
 
 export type Screen =
   | 'welcome'
@@ -23,7 +23,9 @@ export type Screen =
   | 'visit'
   | 'register'
   | 'history'
+  | 'km'
   | 'providerRequest'
+  | 'appointment'
 
 export interface ServiceRequest {
   id: string
@@ -36,6 +38,7 @@ export interface ServiceRequest {
   date: string
   time?: string
   status: RequestStatus
+  clientConfirmed?: boolean
 }
 
 export interface CareDefinition {

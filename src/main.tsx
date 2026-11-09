@@ -17,3 +17,12 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const worker = `${import.meta.env.BASE_URL}sw.js`
+    navigator.serviceWorker.register(worker).catch(() => {
+      /* sem cache offline a página aberta continua usável */
+    })
+  })
+}

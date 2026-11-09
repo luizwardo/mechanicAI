@@ -28,7 +28,7 @@ export function ProviderInbox({ mode, workshopName, requests, onOpen }: Provider
     mode === 'agenda'
       ? booked
       : [...requests].sort((a, b) => {
-          const rank = { nova: 0, aceita: 1, concluida: 2, recusada: 3 }
+          const rank = { nova: 0, aceita: 1, concluida: 2, recusada: 3, cancelada: 4 }
           return rank[a.status] - rank[b.status] || byTime(a, b)
         })
   const days = [...new Set(booked.map((r) => r.date))]

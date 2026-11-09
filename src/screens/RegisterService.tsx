@@ -1,41 +1,47 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Shell } from '../components/Shell'
 import { getCare } from '../data/cares'
+import { clearDraft, readDraft, writeDraft } from '../logic/draft'
+import { validateService } from '../logic/forms'
 import type { CareId, ServiceRecord, Vehicle } from '../types'
 
 interface RegisterServiceProps {
   careId: CareId
   vehicle: Vehicle
   onBack: () => void
+  onInvalid?: () => void
   onSave: (record: Omit<ServiceRecord, 'id'>) => void
 }
 
-export function RegisterService({ careId, vehicle, onBack, onSave }: RegisterServiceProps) {
+export function RegisterService({ careId, vehicle, onBack, onInvalid, onSave }: RegisterServiceProps) {
   const care = getCare(careId)
   const today = new Date().toISOString().slice(0, 10)
-  const [date, setDate] = useState(today)
-  const [km, setKm] = useState(String(vehicle.currentKm))
-  const [notes, setNotes] = useState('')
-  const [value, setValue] = useState('')
+  const draftKey = `mechanicai-draft-register-${careId}`
+  const saved = readDraft(draftKey, { date: today, km: String(vehicle.currentKm), notes: '', value: '' })
+  const [date, setDate] = useState(saved.date)
+  const [km, setKm] = useState(saved.km)
+  const [notes, setNotes] = useState(saved.notes)
+  const [value, setValue] = useState(saved.value)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    writeDraft(draftKey, { date, km, notes, value })
+  }, [draftKey, date, km, notes, value])
+
   function submit() {
-    const kmNum = Number(km.replace(/\D/g, ''))
-    if (!date || !kmNum) {
-      setError('Data e quilometragem são obrigatórias para criar o lembrete.')
+    const result = validateService({ date, kmRaw: km, currentKm: vehicle.currentKm, valueRaw: value })
+    if ('error' in result) {
+      setError(result.error)
+      onInvalid?.()
       return
     }
-    if (kmNum > vehicle.currentKm) {
-      setError('A km do serviço não pode ser maior que a km atual do carro.')
-      return
-    }
-    const valueNum = value.trim() ? Number(value.replace(',', '.')) : undefined
+    clearDraft(draftKey)
     onSave({
       careId,
-      date,
-      km: kmNum,
+      date: result.date,
+      km: result.km,
       notes: notes.trim() || undefined,
-      value: valueNum && !Number.isNaN(valueNum) ? valueNum : undefined,
+      value: result.value,
     })
   }
 
@@ -45,11 +51,18 @@ export function RegisterService({ careId, vehicle, onBack, onSave }: RegisterSer
       title={care?.name ?? 'Registrar'}
       onBack={onBack}
       footer={
-        <button type="button" className="btn btn-primary" onClick={submit}>
+        <button type="submit" form="register-form" className="btn btn-primary">
           Salvar registro
         </button>
       }
     >
+      <form
+        id="register-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
       <p className="helper">
         O lembrete só existe depois deste passo. Sem data ou km, o app não inventa vencimento.
       </p>
@@ -91,6 +104,7 @@ export function RegisterService({ careId, vehicle, onBack, onSave }: RegisterSer
           {error}
         </p>
       )}
+      </form>
     </Shell>
   )
 }

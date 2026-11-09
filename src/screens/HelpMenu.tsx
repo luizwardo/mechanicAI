@@ -1,4 +1,5 @@
 import type { Session } from '../auth/storage'
+import { formatDuration, type UsageLog } from '../logic/usage'
 import type { Vehicle } from '../types'
 
 interface HelpMenuProps {
@@ -11,6 +12,9 @@ interface HelpMenuProps {
   onUpdateKm: () => void
   onProfile: () => void
   onLogout: () => void
+  missionsPaused?: boolean
+  onToggleMissions?: () => void
+  usage?: UsageLog
 }
 
 export function HelpMenu({
@@ -23,6 +27,9 @@ export function HelpMenu({
   onUpdateKm,
   onProfile,
   onLogout,
+  missionsPaused = false,
+  onToggleMissions,
+  usage,
 }: HelpMenuProps) {
   const accountName =
     session?.mode === 'user' ? session.name : session?.mode === 'guest' ? 'Convidado' : '—'
@@ -113,8 +120,39 @@ export function HelpMenu({
             <li>
               <div className="menu-row static">
                 <span>Como usamos seus dados</span>
-                <span className="muted tiny">Só neste aparelho (MVP)</span>
+                <span className="muted tiny">Só neste aparelho. Senha em código, sem texto puro.</span>
               </div>
+            </li>
+            {variant === 'cliente' && onToggleMissions && (
+              <li>
+                <button
+                  type="button"
+                  className="menu-row"
+                  aria-pressed={!missionsPaused}
+                  onClick={onToggleMissions}
+                >
+                  <span>{missionsPaused ? 'Retomar missões' : 'Pausar missões'}</span>
+                  <span className="muted tiny">{missionsPaused ? 'Pausadas' : 'Ativas'}</span>
+                </button>
+              </li>
+            )}
+            {variant === 'cliente' && usage && (
+              <li>
+                <div className="menu-row static">
+                  <span>Indicadores deste aparelho</span>
+                  <span className="muted tiny">
+                    {usage.completions} conclusões · {usage.errors} erros · {formatDuration(usage.lastDurationMs)}
+                  </span>
+                </div>
+              </li>
+            )}
+            <li>
+              <a className="menu-row" href={`${import.meta.env.BASE_URL}portfolio.html`}>
+                <span>Portfólio e QR Code</span>
+                <span className="menu-chevron" aria-hidden>
+                  ›
+                </span>
+              </a>
             </li>
             <li>
               <div className="menu-row static">

@@ -10,6 +10,7 @@ interface WelcomeProps {
   onCreateAccount: () => void
   onLogin: () => void
   onGuest: () => void
+  onDemo: () => void
 }
 
 export function Welcome({
@@ -20,6 +21,7 @@ export function Welcome({
   onCreateAccount,
   onLogin,
   onGuest,
+  onDemo,
 }: WelcomeProps) {
   return (
     <div className="shell shell-has-dock welcome">
@@ -63,6 +65,11 @@ export function Welcome({
         <button type="button" className="btn btn-ghost" onClick={onGuest}>
           Entrar como convidado
         </button>
+        {role === 'cliente' && (
+          <button type="button" className="btn btn-ghost" onClick={onDemo}>
+            Abrir demo (Gol 1.0 · 87 mil km)
+          </button>
+        )}
       </footer>
     </div>
   )

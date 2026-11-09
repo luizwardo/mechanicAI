@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Shell } from '../components/Shell'
 import { CARES, getCare } from '../data/cares'
 import { WORKSHOPS } from '../data/workshops'
+import { clearDraft, readDraft, writeDraft } from '../logic/draft'
+import { validateSchedule } from '../logic/forms'
 import type { CareId, Vehicle } from '../types'
 
 interface VisitSheetProps {
@@ -10,6 +12,7 @@ interface VisitSheetProps {
   workshopId: string
   onWorkshopChange: (id: string) => void
   onBack: () => void
+  onInvalid?: () => void
   onSchedule: (input: { workshopId: string; careIds: CareId[]; date: string; time: string }) => void
 }
 
@@ -21,15 +24,31 @@ export function VisitSheet({
   workshopId,
   onWorkshopChange,
   onBack,
+  onInvalid,
   onSchedule,
 }: VisitSheetProps) {
   const today = new Date().toISOString().slice(0, 10)
-  const [ids, setIds] = useState<CareId[]>(
-    initialIds.length > 0 ? initialIds : ['oleo', 'pastilhas', 'correia'],
+  const [ids, setIds] = useState<CareId[]>(() => {
+    const fallback = initialIds.length > 0 ? initialIds : (['oleo', 'pastilhas', 'correia'] as CareId[])
+    const saved = readDraft('mechanicai-draft-visit', {
+      ids: fallback,
+      date: today,
+      time: '09:00',
+    })
+    const known = new Set(CARES.map((care) => care.id))
+    const savedIds = Array.isArray(saved.ids) ? saved.ids.filter((id): id is CareId => known.has(id)) : []
+    const merged = [...savedIds, ...initialIds].filter((id, index, all) => all.indexOf(id) === index)
+    return merged.length > 0 ? merged : fallback
+  })
+  const [date, setDate] = useState(() => readDraft('mechanicai-draft-visit', { date: today, ids, time: '09:00' }).date)
+  const [time, setTime] = useState(
+    () => readDraft('mechanicai-draft-visit', { time: '09:00', ids, date: today }).time,
   )
-  const [date, setDate] = useState(today)
-  const [time, setTime] = useState('09:00')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    writeDraft('mechanicai-draft-visit', { ids, date, time })
+  }, [ids, date, time])
 
   const selected = useMemo(() => ids.map((id) => getCare(id)).filter(Boolean), [ids])
   const workshop = WORKSHOPS.find((w) => w.id === workshopId)
@@ -39,16 +58,10 @@ export function VisitSheet({
   }
 
   function schedule() {
-    if (!workshopId) {
-      setError('Escolha a oficina para onde vai levar o carro.')
-      return
-    }
-    if (!date) {
-      setError('Escolha o dia do atendimento.')
-      return
-    }
-    if (ids.length === 0) {
-      setError('Marque pelo menos um cuidado.')
+    const invalid = validateSchedule({ workshopId, date, careCount: ids.length })
+    if (invalid) {
+      setError(invalid)
+      onInvalid?.()
       return
     }
     const lines = [
@@ -64,6 +77,7 @@ export function VisitSheet({
     if (navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(lines.join('\n'))
     }
+    clearDraft('mechanicai-draft-visit')
     onSchedule({ workshopId, careIds: ids, date, time })
   }
 
@@ -73,11 +87,18 @@ export function VisitSheet({
       title="Atendimento"
       onBack={onBack}
       footer={
-        <button type="button" className="btn btn-primary" onClick={schedule}>
+        <button type="submit" form="visit-form" className="btn btn-primary">
           Confirmar agendamento
         </button>
       }
     >
+      <form
+        id="visit-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          schedule()
+        }}
+      >
       <div className="visit-layout">
         <div className="visit-main">
           <div className="visit-header">
@@ -175,6 +196,7 @@ export function VisitSheet({
           </section>
         )}
       </div>
+      </form>
     </Shell>
   )
 }

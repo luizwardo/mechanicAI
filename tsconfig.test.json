@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "outDir": "dist-test",
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noEmit": false
+  },
+  "include": ["src/logic/**/*.ts", "src/data/cares.ts", "src/types.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -1,3 +1,4 @@
+import { MissionCard } from '../components/Missions'
 import { StatusPill } from '../components/Shell'
 import { WORKSHOPS } from '../data/workshops'
 import {
@@ -8,6 +9,7 @@ import {
   suggestedVisitIds,
   type CareRow,
 } from '../logic/status'
+import type { MissionFlags } from '../logic/progress'
 import type { CareId, CareStatus, ServiceRecord, Vehicle } from '../types'
 
 interface HomeProps {
@@ -19,6 +21,8 @@ interface HomeProps {
   upcomingLabel?: string
   onOpenCare: (id: CareId) => void
   onPrepareVisit: (ids: CareId[]) => void
+  missions: MissionFlags
+  onToggleMissions: () => void
 }
 
 function countBy(rows: CareRow[], status: CareStatus) {
@@ -59,6 +63,8 @@ export function Home({
   upcomingLabel,
   onOpenCare,
   onPrepareVisit,
+  missions,
+  onToggleMissions,
 }: HomeProps) {
   const rows = buildCareRows(vehicle, records)
   const withRecord = rows.filter((r) => r.status !== 'sem_registro')
@@ -148,6 +154,12 @@ export function Home({
             </button>
           )}
         </section>
+
+        <MissionCard
+          flags={missions}
+          hasRecord={records.length > 0}
+          onPause={onToggleMissions}
+        />
 
         <div className="home-lists">
           {withRecord.length > 0 && (

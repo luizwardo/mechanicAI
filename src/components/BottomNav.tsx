@@ -1,4 +1,4 @@
-export type MainTab = 'home' | 'search' | 'help'
+export type MainTab = 'home' | 'search' | 'agenda' | 'help'
 
 interface BottomNavProps {
   active: MainTab
@@ -103,6 +103,17 @@ export function BottomNav({ active, onChange, mode = 'cliente' }: BottomNavProps
         )}
         <span>{midLabel}</span>
       </button>
+      {mode === 'cliente' && (
+        <button
+          type="button"
+          className={`hotbar-item${active === 'agenda' ? ' is-active' : ''}`}
+          aria-current={active === 'agenda' ? 'page' : undefined}
+          onClick={() => onChange('agenda')}
+        >
+          <IconAgenda active={active === 'agenda'} />
+          <span>Agendamentos</span>
+        </button>
+      )}
       <button
         type="button"
         className={`hotbar-item${active === 'help' ? ' is-active' : ''}`}
